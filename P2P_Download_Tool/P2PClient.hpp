@@ -8,7 +8,7 @@
 #define DOWNLOAD_PATH "./Download/"
 //1左移10位是1K，左移20位是1M
 //#define MAX_RANGE 100 << 20
-#define MAX_RANGE 5
+#define MAX_RANGE (100*1024*1024)
 
 
 /*
