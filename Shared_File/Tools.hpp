@@ -6,6 +6,9 @@
 #include <string>
 #include <boost/filesystem.hpp>
 #include <io.h>
+
+#define SHARED_PATH "./Shared/"
+#define DOWNLOAD_PATH "./Download/"
 #ifdef _WIN32
 //Windows头文件
 #include <WS2tcpip.h> //Windows Socket协议
@@ -41,8 +44,9 @@ class FileUtil
 public:
 	static bool Write(const std::string& name, const std::string &body, int64_t offset = 0)
 	{
+		
 		FILE* fp = NULL;
-		fopen_s(&fp, name.c_str(), "wb+");//以二进制方式打开文件写入数据
+		fopen_s(&fp, name.c_str(), "ab+");//以二进制方式打开文件追加写入数据
 		if (fp == NULL)
 		{
 			std::cerr << "打开文件失败！\n";
@@ -57,58 +61,54 @@ public:
 			fclose(fp);
 			return false;
 		}
-
+		else
+		{
+			std::cout << "向文件写入数据成功！\n";
+		}
 		fclose(fp);
 		return true;
 	}
-
-	//指针参数表示这是一个输出型参数，
-	//const &表示这是一个输入型参数
-	//&表示这是一个输入输出型参数
-	//读取文件中的所有数据
+	//指针参数表示这是一个输出型参数
+	//const & 表示这是一个输入型参数
+	//& 表示这是一个输入输出型参数
 	static bool Read(const std::string &name, std::string *body)
 	{
-
-		int64_t filesize = boost::filesystem::file_size(name);
+		uint64_t filesize = boost::filesystem::file_size(name);
 		body->resize(filesize);
-		std::cout << "读取文件数据：" << name << " 的size：" << filesize << std::endl;
-		FILE* fp = NULL;
+		std::cout << "读取文件数据:" << name << "size:" << filesize << "\n";
+		FILE *fp = NULL;
 		fopen_s(&fp, name.c_str(), "rb+");
 		if (fp == NULL)
 		{
-			std::cerr << "打开文件失败\n";
+			std::cerr << "打开文件数据失败\n";
 			return false;
 		}
-
-		int ret = fread(&(*body)[0], 1, filesize, fp);
+		size_t ret = fread(&(*body)[0], 1, filesize, fp);
 		if (ret != filesize)
 		{
-			std::cerr << "从文件读取数据失败！\n";
+			std::cerr << "读取文件失败\n";
 			fclose(fp);
 			return false;
 		}
 		fclose(fp);
-
 		return true;
 	}
 
-	//从name文件中offset位置开始读取len长度的文件数据放到body中
-	static bool ReadRange(const std::string &name, std::string *body, int64_t len, int64_t offset)
+	static bool ReadRange(const std::string &name, std::string  *body, int len, int offset)
 	{
 		body->resize(len);
-		std::cout << "读取文件数据：" << std::endl;
-		FILE* fp = NULL;
+		FILE *fp = NULL;
 		fopen_s(&fp, name.c_str(), "rb+");
 		if (fp == NULL)
 		{
-			std::cerr << "打开文件失败\n";
+			std::cerr << "打开文件数据失败\n";
 			return false;
 		}
-		fseek(fp, offset, SEEK_SET);//跳转到指定位置
-		int ret = fread(&(*body)[0], 1, len, fp);//读取指定长度到body中
+		fseek(fp, offset, SEEK_SET);
+		size_t ret = fread(&(*body)[0], 1, len, fp);
 		if (ret != len)
 		{
-			std::cerr << "从文件中读取数据失败\n";
+			std::cerr << "读取文件失败\n";
 			fclose(fp);
 			return false;
 		}
