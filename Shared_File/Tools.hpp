@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <fstream> //ÎÄ¼ş²Ù×÷
+#include <fstream> //æ–‡ä»¶æ“ä½œ
 #include <vector>
 #include <string>
 #include <boost/filesystem.hpp>
@@ -10,14 +10,14 @@
 #define SHARED_PATH "./Shared/"
 #define DOWNLOAD_PATH "./Download/"
 #ifdef _WIN32
-//WindowsÍ·ÎÄ¼ş
-#include <WS2tcpip.h> //Windows SocketĞ­Òé
-#include <Iphlpapi.h> //»ñÈ¡Íø¿¨ĞÅÏ¢½Ó¿Ú
+//Windowså¤´æ–‡ä»¶
+#include <WS2tcpip.h> //Windows Socketåè®®
+#include <Iphlpapi.h> //è·å–ç½‘å¡ä¿¡æ¯æ¥å£
 #include <sstream>
-#pragma  comment(lib, "Iphlpapi.lib") //»ñÈ¡Íø¿¨ĞÅÏ¢½Ó¿ÚµÄ¿âÎÄ¼ş£¬µ¼Èë¿â
-#pragma comment(lib, "ws2_32.lib") //WindowsÏÂsocket¿â
+#pragma  comment(lib, "Iphlpapi.lib") //è·å–ç½‘å¡ä¿¡æ¯æ¥å£çš„åº“æ–‡ä»¶ï¼Œå¯¼å…¥åº“
+#pragma comment(lib, "ws2_32.lib") //Windowsä¸‹socketåº“
 #else
-//LinuxÍ·ÎÄ¼ş
+//Linuxå¤´æ–‡ä»¶
 #include <ifaddrs.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -38,10 +38,11 @@ public:
 		return res;
 	}
 };
-//ÎÄ¼ş¹¤¾ß
+//æ–‡ä»¶å·¥å…·
 class FileUtil
 {
 public:
+<<<<<<< HEAD
 	static bool Write(const std::string& name, const std::string &body, int64_t offset = 0)
 	{
 		
@@ -50,17 +51,24 @@ public:
 		if (fp == NULL)
 		{
 			std::cerr << "´ò¿ªÎÄ¼şÊ§°Ü£¡\n";
+=======
+	static bool Write(const std::string &name, const std::string &body, int64_t offset = 0) {
+		std::cout << "write data:" << name << " size:" << body.size() <<" ["<<body<<"]\n";
+		std::fstream ofs;
+		ofs.open(name, std::ios::in | std::ios::out | std::ios::binary);
+		if (ofs.is_open() == false) {
+			std::cout << "æ‰“å¼€æ–‡ä»¶å¤±è´¥:" << name << std::endl;
+>>>>>>> 83742fcd9cb03c3fb9176f6457a9aaca3ef7849c
 			return false;
 		}
-
-		fseek(fp, offset, SEEK_SET);
-		int ret = fwrite(body.c_str(), 1, body.size(), fp);
-		if (ret != body.size())
-		{
-			std::cerr << "ÏòÎÄ¼şĞ´ÈëÊı¾İÊ§°Ü£¡\n";
-			fclose(fp);
+		ofs.seekp(offset, std::ios::beg);//è¯»å†™ä½ç½®è·³è½¬åˆ°ç›¸å¯¹äºæ–‡ä»¶èµ·å§‹ä½ç½®å¼€å§‹åç§»offsetçš„åç§»é‡
+		ofs.write(&body[0], body.size());
+		if (ofs.good() == false) {
+			std::cerr << "å‘æ–‡ä»¶å†™å…¥æ•°æ®å¤±è´¥\n";
+			ofs.close();
 			return false;
 		}
+<<<<<<< HEAD
 		else
 		{
 			std::cout << "ÏòÎÄ¼şĞ´ÈëÊı¾İ³É¹¦£¡\n";
@@ -110,12 +118,54 @@ public:
 		{
 			std::cerr << "¶ÁÈ¡ÎÄ¼şÊ§°Ü\n";
 			fclose(fp);
-			return false;
-		}
-		fclose(fp);
+=======
+		ofs.close();
 		return true;
 	}
+	//æŒ‡é’ˆå‚æ•°è¡¨ç¤ºè¿™æ˜¯ä¸€ä¸ªè¾“å‡ºå‹å‚æ•°
+	//const & è¡¨ç¤ºè¿™æ˜¯ä¸€ä¸ªè¾“å…¥å‹å‚æ•°
+	//& è¡¨ç¤ºè¿™æ˜¯ä¸€ä¸ªè¾“å…¥è¾“å‡ºå‹å‚æ•°
+	static bool Read(const std::string &name, std::string *body) {
+		int64_t filesize = GetFileSize(name);
+		body->resize(filesize);
 
+		std::fstream ifs(name, std::ios::in | std::ios::out | std::ios::binary);
+		if (ifs.is_open() == false) {
+			std::cerr << "æ‰“å¼€æ–‡ä»¶å¤±è´¥\n";
+			return false;
+		}
+		//std::cout << "è¦è¯»å–çš„æ–‡ä»¶å¤§å°:" << name << ":" << filesize << std::endl;
+		ifs.read(&(*body)[0], filesize);
+		
+		if (ifs.good() == false) {
+			std::cerr << "è¯»å–æ–‡ä»¶æ•°æ®å¤±è´¥\n";
+			std::cout << *body << std::endl;
+			ifs.close();
+			return false;
+		}
+		ifs.close();
+		return true;
+	}
+	static bool ReadRange(const std::string &name, std::string *body, int64_t len, int64_t offset) {
+		body->resize(len);
+		std::fstream ifs(name, std::ios::in | std::ios::out | std::ios::binary);
+		if (ifs.is_open() == false) {
+			std::cerr << "æ‰“å¼€æ–‡ä»¶å¤±è´¥\n";
+			return false;
+		}
+		ifs.seekg(offset, std::ios::beg);
+		ifs.read(&(*body)[0], len);
+
+		if (ifs.good() == false) {
+			std::cerr << "è¯»å–æ–‡ä»¶æ•°æ®å¤±è´¥\n";
+			std::cout << *body << std::endl;
+			ifs.close();
+>>>>>>> 83742fcd9cb03c3fb9176f6457a9aaca3ef7849c
+			return false;
+		}
+		ifs.close();
+		return true;
+	}
 
 	static int64_t GetFileSize(const std::string& name)
 	{
@@ -124,7 +174,7 @@ public:
 
 	
 
-	//»ñÈ¡·Ö¿éÏÂÔØ
+	//è·å–åˆ†å—ä¸‹è½½
 	static bool GetRange(std::string& range, int64_t &range_start, int64_t &range_end)
 	{
 		size_t pos1, pos2;
@@ -151,54 +201,54 @@ public:
 class Adapter
 {
 public:
-	uint32_t _ip_addr; //Íø¿¨ÉÏµÄIPµØÖ·
-	uint32_t _mask_addr; //Íø¿¨ÉÏµÄ×ÓÍøÑÚÂë
+	uint32_t _ip_addr; //ç½‘å¡ä¸Šçš„IPåœ°å€
+	uint32_t _mask_addr; //ç½‘å¡ä¸Šçš„å­ç½‘æ©ç 
 };
 
 class AdapterUtil
 {
 public:
 #ifdef _WIN32
-	//Windows ÏÂµÄ»ñÈ¡Íø¿¨ĞÅÏ¢ÊµÏÖ
+	//Windows ä¸‹çš„è·å–ç½‘å¡ä¿¡æ¯å®ç°
 	static bool GetAllAdapter(std::vector<Adapter>* list)
 	{
-		//ÏÈÓĞÒ»¸ö½á¹¹Ìå±£´æÍø¿¨ĞÅÏ¢  
-		//PIP_ADAPTER_INFOÊÇWindowsÏÂ´æ´¢Íø¿¨ĞÅÏ¢µÄ½á¹¹Ìå
+		//å…ˆæœ‰ä¸€ä¸ªç»“æ„ä½“ä¿å­˜ç½‘å¡ä¿¡æ¯  
+		//PIP_ADAPTER_INFOæ˜¯Windowsä¸‹å­˜å‚¨ç½‘å¡ä¿¡æ¯çš„ç»“æ„ä½“
 		PIP_ADAPTER_INFO p_adapters = new IP_ADAPTER_INFO();
 
-		//GetAdaptersInfo()ÊÇWindowsÏÂ»ñÈ¡Íø¿¨ĞÅÏ¢µÄ½Ó¿Ú ---- Íø¿¨ĞÅÏ¢ÓĞ¶à¸ö£¬Òò´Ë´«ÈëÒ»¸öÖ¸Õë
-		//ÒòÎª¿Õ¼ä²»×ã£¬Òò´ËÓĞÒ»¸öÊä³öĞÍ²ÎÊı(all_adapter_size)£¬ÓÃÓÚÏòÓÃ¾ß·µ»ØËùÓĞÍø¿¨ĞÅÏ¢¿Õ¼ä
+		//GetAdaptersInfo()æ˜¯Windowsä¸‹è·å–ç½‘å¡ä¿¡æ¯çš„æ¥å£ ---- ç½‘å¡ä¿¡æ¯æœ‰å¤šä¸ªï¼Œå› æ­¤ä¼ å…¥ä¸€ä¸ªæŒ‡é’ˆ
+		//å› ä¸ºç©ºé—´ä¸è¶³ï¼Œå› æ­¤æœ‰ä¸€ä¸ªè¾“å‡ºå‹å‚æ•°(all_adapter_size)ï¼Œç”¨äºå‘ç”¨å…·è¿”å›æ‰€æœ‰ç½‘å¡ä¿¡æ¯ç©ºé—´
 		uint64_t all_adapter_size = sizeof(IP_ADAPTER_INFO);
-		//all_adapter_sizeÓÃÓÚ»ñÈ¡Êµ¼ÊËùÓĞÍø¿¨ĞÅÏ¢ËùÕ¼ÓÃµÄ¿Õ¼ä´óĞ¡
+		//all_adapter_sizeç”¨äºè·å–å®é™…æ‰€æœ‰ç½‘å¡ä¿¡æ¯æ‰€å ç”¨çš„ç©ºé—´å¤§å°
 		int ret = GetAdaptersInfo(p_adapters, (PULONG)&all_adapter_size);
 
 		if (ret == ERROR_BUFFER_OVERFLOW)
 		{
-			//µ±Ç°»º³åÇøÒç³öÁË£¬¿Õ¼ä²»×ã
-			//Òò´ËÖØĞÂ¸øÖ¸ÕëÉêÇë¿Õ¼ä
+			//å½“å‰ç¼“å†²åŒºæº¢å‡ºäº†ï¼Œç©ºé—´ä¸è¶³
+			//å› æ­¤é‡æ–°ç»™æŒ‡é’ˆç”³è¯·ç©ºé—´
 			delete p_adapters;
 			p_adapters = (PIP_ADAPTER_INFO)new BYTE[all_adapter_size];
-			//ÖØĞÂ»ñÈ¡Íø¿¨ĞÅÏ¢
+			//é‡æ–°è·å–ç½‘å¡ä¿¡æ¯
 			GetAdaptersInfo(p_adapters, (PULONG)&all_adapter_size);
 		}
 
 		while (p_adapters)
 		{
 			Adapter adapter;
-			//inet_pton(int family, char* string, void* buf);½«Ò»¸ö×Ö·û´®µã·ÖÊ®½øÖÆµÄIPµØÖ·×ª»»ÎªÍøÂç×Ö½ÚĞò
-			//family£ºAF_INET(IPv4µØÖ·Óò) ¡¢AF_INET6(IPv6µØÖ·Óò)
-			//string£º×Ö·û´®µã·ÖÊ®½øÖÆµÄIPµØÖ·
-			//buf£ºÒ»¿é»º³åÇø£¬ÓÃÓÚ½ÓÊÕ×ª»»ºóµÄÍøÂç×Ö½ÚĞòIPµØÖ·
+			//inet_pton(int family, char* string, void* buf);å°†ä¸€ä¸ªå­—ç¬¦ä¸²ç‚¹åˆ†åè¿›åˆ¶çš„IPåœ°å€è½¬æ¢ä¸ºç½‘ç»œå­—èŠ‚åº
+			//familyï¼šAF_INET(IPv4åœ°å€åŸŸ) ã€AF_INET6(IPv6åœ°å€åŸŸ)
+			//stringï¼šå­—ç¬¦ä¸²ç‚¹åˆ†åè¿›åˆ¶çš„IPåœ°å€
+			//bufï¼šä¸€å—ç¼“å†²åŒºï¼Œç”¨äºæ¥æ”¶è½¬æ¢åçš„ç½‘ç»œå­—èŠ‚åºIPåœ°å€
 			inet_pton(AF_INET, p_adapters->IpAddressList.IpAddress.String, &adapter._ip_addr);
 			inet_pton(AF_INET, p_adapters->IpAddressList.IpMask.String, &adapter._mask_addr);
 			if (adapter._ip_addr != 0)
 			{
-				//ÒòÎªÓĞĞ©Íø¿¨²¢Ã»ÓĞÆôÓÃ£¬µ¼ÖÂIPµØÖ·Îª0£¬ËùÒÔIPµØÖ·Îª0µÄÍø¿¨ĞÅÏ¢ÎŞĞè»ñÈ¡
-				list->push_back(adapter);//½«Íø¿¨ĞÅÏ¢Ìí¼Óµ½vectorÖĞ£¬·µ»Ø¸øÓÃ»§
-				std::cout << "Íø¿¨Ãû³Æ£º" << p_adapters->AdapterName << std::endl;
-				std::cout << "Íø¿¨ÃèÊö£º" << p_adapters->Description << std::endl;
-				std::cout << "IPµØÖ·£º" << p_adapters->IpAddressList.IpAddress.String << std::endl;
-				std::cout << "×ÓÍøÑÚÂë£º" << p_adapters->IpAddressList.IpMask.String << std::endl;
+				//å› ä¸ºæœ‰äº›ç½‘å¡å¹¶æ²¡æœ‰å¯ç”¨ï¼Œå¯¼è‡´IPåœ°å€ä¸º0ï¼Œæ‰€ä»¥IPåœ°å€ä¸º0çš„ç½‘å¡ä¿¡æ¯æ— éœ€è·å–
+				list->push_back(adapter);//å°†ç½‘å¡ä¿¡æ¯æ·»åŠ åˆ°vectorä¸­ï¼Œè¿”å›ç»™ç”¨æˆ·
+				std::cout << "ç½‘å¡åç§°ï¼š" << p_adapters->AdapterName << std::endl;
+				std::cout << "ç½‘å¡æè¿°ï¼š" << p_adapters->Description << std::endl;
+				std::cout << "IPåœ°å€ï¼š" << p_adapters->IpAddressList.IpAddress.String << std::endl;
+				std::cout << "å­ç½‘æ©ç ï¼š" << p_adapters->IpAddressList.IpMask.String << std::endl;
 				std::cout << std::endl;
 			}
 			p_adapters = p_adapters->Next;
@@ -207,7 +257,7 @@ public:
 		return true;
 	}
 #else
-	//linuxÏÂµÄ»ñÈ¡Íø¿¨ĞÅÏ¢ÊµÏÖ
+	//linuxä¸‹çš„è·å–ç½‘å¡ä¿¡æ¯å®ç°
 	static bool GetAllAdapter(std::vector<Adapter> *list) {
 		struct ifaddrs *addrs = NULL;
 		uint32_t net_seg, end_host;
