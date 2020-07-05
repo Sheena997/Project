@@ -42,59 +42,51 @@ public:
 class FileUtil
 {
 public:
-<<<<<<< HEAD
 	static bool Write(const std::string& name, const std::string &body, int64_t offset = 0)
 	{
 		
 		FILE* fp = NULL;
-		fopen_s(&fp, name.c_str(), "ab+");//�Զ����Ʒ�ʽ���ļ�׷��д������
+		fopen_s(&fp, name.c_str(), "ab+");//以二进制方式打开文件追加写入数据
 		if (fp == NULL)
 		{
-			std::cerr << "���ļ�ʧ�ܣ�\n";
-=======
-	static bool Write(const std::string &name, const std::string &body, int64_t offset = 0) {
-		std::cout << "write data:" << name << " size:" << body.size() <<" ["<<body<<"]\n";
-		std::fstream ofs;
-		ofs.open(name, std::ios::in | std::ios::out | std::ios::binary);
-		if (ofs.is_open() == false) {
-			std::cout << "打开文件失败:" << name << std::endl;
->>>>>>> 83742fcd9cb03c3fb9176f6457a9aaca3ef7849c
+			std::cerr << "打开文件失败！\n";
 			return false;
 		}
-		ofs.seekp(offset, std::ios::beg);//读写位置跳转到相对于文件起始位置开始偏移offset的偏移量
-		ofs.write(&body[0], body.size());
-		if (ofs.good() == false) {
-			std::cerr << "向文件写入数据失败\n";
-			ofs.close();
+
+		fseek(fp, offset, SEEK_SET);
+		int ret = fwrite(body.c_str(), 1, body.size(), fp);
+		if (ret != body.size())
+		{
+			std::cerr << "向文件写入数据失败！\n";
+			fclose(fp);
 			return false;
 		}
-<<<<<<< HEAD
 		else
 		{
-			std::cout << "���ļ�д�����ݳɹ���\n";
+			std::cout << "向文件写入数据成功！\n";
 		}
 		fclose(fp);
 		return true;
 	}
-	//ָ�������ʾ����һ������Ͳ���
-	//const & ��ʾ����һ�������Ͳ���
-	//& ��ʾ����һ����������Ͳ���
+	//指针参数表示这是一个输出型参数
+	//const & 表示这是一个输入型参数
+	//& 表示这是一个输入输出型参数
 	static bool Read(const std::string &name, std::string *body)
 	{
 		uint64_t filesize = boost::filesystem::file_size(name);
 		body->resize(filesize);
-		std::cout << "��ȡ�ļ�����:" << name << "size:" << filesize << "\n";
+		std::cout << "读取文件数据:" << name << "size:" << filesize << "\n";
 		FILE *fp = NULL;
 		fopen_s(&fp, name.c_str(), "rb+");
 		if (fp == NULL)
 		{
-			std::cerr << "���ļ�����ʧ��\n";
+			std::cerr << "打开文件数据失败\n";
 			return false;
 		}
 		size_t ret = fread(&(*body)[0], 1, filesize, fp);
 		if (ret != filesize)
 		{
-			std::cerr << "��ȡ�ļ�ʧ��\n";
+			std::cerr << "读取文件失败\n";
 			fclose(fp);
 			return false;
 		}
@@ -109,63 +101,21 @@ public:
 		fopen_s(&fp, name.c_str(), "rb+");
 		if (fp == NULL)
 		{
-			std::cerr << "���ļ�����ʧ��\n";
+			std::cerr << "打开文件数据失败\n";
 			return false;
 		}
 		fseek(fp, offset, SEEK_SET);
 		size_t ret = fread(&(*body)[0], 1, len, fp);
 		if (ret != len)
 		{
-			std::cerr << "��ȡ�ļ�ʧ��\n";
+			std::cerr << "读取文件失败\n";
 			fclose(fp);
-=======
-		ofs.close();
+			return false;
+		}
+		fclose(fp);
 		return true;
 	}
-	//指针参数表示这是一个输出型参数
-	//const & 表示这是一个输入型参数
-	//& 表示这是一个输入输出型参数
-	static bool Read(const std::string &name, std::string *body) {
-		int64_t filesize = GetFileSize(name);
-		body->resize(filesize);
 
-		std::fstream ifs(name, std::ios::in | std::ios::out | std::ios::binary);
-		if (ifs.is_open() == false) {
-			std::cerr << "打开文件失败\n";
-			return false;
-		}
-		//std::cout << "要读取的文件大小:" << name << ":" << filesize << std::endl;
-		ifs.read(&(*body)[0], filesize);
-		
-		if (ifs.good() == false) {
-			std::cerr << "读取文件数据失败\n";
-			std::cout << *body << std::endl;
-			ifs.close();
-			return false;
-		}
-		ifs.close();
-		return true;
-	}
-	static bool ReadRange(const std::string &name, std::string *body, int64_t len, int64_t offset) {
-		body->resize(len);
-		std::fstream ifs(name, std::ios::in | std::ios::out | std::ios::binary);
-		if (ifs.is_open() == false) {
-			std::cerr << "打开文件失败\n";
-			return false;
-		}
-		ifs.seekg(offset, std::ios::beg);
-		ifs.read(&(*body)[0], len);
-
-		if (ifs.good() == false) {
-			std::cerr << "读取文件数据失败\n";
-			std::cout << *body << std::endl;
-			ifs.close();
->>>>>>> 83742fcd9cb03c3fb9176f6457a9aaca3ef7849c
-			return false;
-		}
-		ifs.close();
-		return true;
-	}
 
 	static int64_t GetFileSize(const std::string& name)
 	{
